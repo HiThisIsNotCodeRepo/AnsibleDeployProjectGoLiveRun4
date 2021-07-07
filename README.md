@@ -1,7 +1,7 @@
 # AnsibleDeployProjectGoLiveRun4
 
 # Prerequisite
-1. Master install ansible
+Master install ansible
 
 # Deploy App
 ## ad-hoc version
@@ -14,6 +14,7 @@ Install Go
 ```shell
 ansible node -m get_url -a "url=https://golang.org/dl/go1.16.5.linux-amd64.tar.gz dest=~"
 ansible node -m unarchive -a "src=~/go1.16.5.linux-amd64.tar.gz dest=/usr/local remote_src=yes"
+ansible node -m file -a "path=~/gocode state=directory"
 ansible node -m lineinfile -a "line='export GOROOT=/usr/local/go' dest=/etc/profile"
 ansible node -m lineinfile -a "line='export GOROOT=/usr/local/go' dest=/root/.bashrc"
 ansible node -m lineinfile -a "line='export GOPATH=~/gocode' dest=/etc/profile"
@@ -48,4 +49,91 @@ ansible node -m shell -a "cd gocode/DockerDeployProjectGoLiveRun4/ && go mod tid
 ansible node -m shell -a "docker run --name paotui_back_end --net=host -d magicpowerworld/paotui_back_end:20210706"
 # 3 Run Frontend container
 ansible node -m shell -a "docker run --name paotui_front_end -p 80:80 -d magicpowerworld/paotui_front_end:20210706"
+```
+## playbook version
+One script deploy
+```shell
+# on master
+ansible-playbook paotui_deploy.yml
+```
+*paotui_deploy.yml*
+```yaml
+- hosts: node
+  tasks:
+
+    - name: Install Git
+      yum: name=git state=installed
+
+    - name: Download Go
+      get_url: url=https://golang.org/dl/go1.16.5.linux-amd64.tar.gz dest=~
+
+    - name: Extract Go download
+      unarchive: src=~/go1.16.5.linux-amd64.tar.gz dest=/usr/local remote_src=yes
+
+    - name: Make dir for go code
+      file: path=~/gocode state=directory
+
+    - name: Env variable
+      lineinfile: line='export GOROOT=/usr/local/go' dest=/etc/profile
+
+    - name: Env variable
+      lineinfile: line='export GOROOT=/usr/local/go' dest=/root/.bashrc
+
+    - name: Env variable
+      lineinfile: line='export GOPATH=~/gocode' dest=/etc/profile
+
+    - name: Env variable
+      lineinfile: line='export GOPATH=~/gocode' dest=/root/.bashrc
+
+    - name: Env variable
+      lineinfile: line='export PATH=$GOPATH/bin:$GOROOT/bin:$PATH' dest=/etc/profile
+
+    - name: Env variable
+      lineinfile: line='export PATH=$GOPATH/bin:$GOROOT/bin:$PATH' dest=/root/.bashrc
+
+    - name: Pre install docker
+      yum: name=yum-utils state=installed
+
+    - name: Configure yum manager
+      shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+    - name: Install docker ce
+      yum: name=docker-ce state=installed
+
+    - name: Install docker ce cli
+      yum: name=docker-ce-cli state=installed
+
+    - name: Install containerd io
+      yum: name=containerd.io state=installed
+
+    - name: Enable docker
+      systemd: name=docker enabled=yes
+
+    - name: Start docker
+      systemd: name=docker state=started
+
+    - name: Clone database populate app
+      shell: git clone https://github.com/qinchenfeng/DockerDeployProjectGoLiveRun4.git
+
+    - name: Move downloaded repo
+      shell: mv DockerDeployProjectGoLiveRun4/ gocode/DockerDeployProjectGoLiveRun4
+
+    - name: Run MySQL container
+      shell: docker run --name paotui_mysql -dp 3306:3306 magicpowerworld/paotui_mysql:20210706
+
+    - name: Wait 20 sec
+      shell: sleep 20
+
+    - name: Prepare database
+      shell: docker exec -it paotui_mysql bash -c 'mysql -uroot -ppassword < /tmp/mysql.sql'
+
+    - name: Populate database
+      shell: cd gocode/DockerDeployProjectGoLiveRun4/ && go mod tidy && go run .
+
+    - name: Run backend container
+      shell: docker run --name paotui_back_end --net=host -d magicpowerworld/paotui_back_end:20210706
+
+    - name: Run frontend container
+      shell: docker run --name paotui_front_end -p 80:80 -d magicpowerworld/paotui_front_end:20210706
+
 ```
