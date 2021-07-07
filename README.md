@@ -24,7 +24,7 @@ ansible node -m lineinfile -a "line='export PATH=\$GOPATH/bin:\$GOROOT/bin:\$PAT
 Install Docker
 ```shell
 ansible node -m yum -a 'name=yum-utils state=installed'
-ansible node -m shell -a 'sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo'
+ansible node -m shell -a 'yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo'
 ansible node -m yum -a 'name=docker-ce state=installed'
 ansible node -m yum -a 'name=docker-ce-cli state=installed'
 ansible node -m yum -a 'name=containerd.io state=installed'
@@ -33,19 +33,19 @@ ansible node -m systemd -a 'name=docker state=started'
 ```
 Install Database populate app
 ```shell
-ansible node -m shell "git clone https://github.com/qinchenfeng/DockerDeployProjectGoLiveRun4.git"
-ansible node -m shell "mv DockerDeployProjectGoLiveRun4/ gocode/"
+ansible node -m shell -a "git clone https://github.com/qinchenfeng/DockerDeployProjectGoLiveRun4.git"
+ansible node -m shell -a "mv DockerDeployProjectGoLiveRun4/ gocode/DockerDeployProjectGoLiveRun4"
 ```
 ### Deploy
 ```shell
 # 1 Run MySQL container
-ansible node -m shell "docker run --name paotui_mysql -dp 3306:3306 magicpowerworld/paotui_mysql:20210706"
+ansible node -m shell -a "docker run --name paotui_mysql -dp 3306:3306 magicpowerworld/paotui_mysql:20210706"
 # 1-1 Prepare database
-ansible node -m shell "docker exec -it paotui_mysql bash -c 'mysql -uroot -ppassword < /tmp/mysql.sql'"
+ansible node -m shell -a "docker exec -it paotui_mysql bash -c 'mysql -uroot -ppassword < /tmp/mysql.sql'"
 # 1-2 Populate database
-ansible node -m shell "cd gocode/DockerDeployProjectGoLiveRun4/ && go mod tidy && go run ."
+ansible node -m shell -a "cd gocode/DockerDeployProjectGoLiveRun4/ && go mod tidy && go run ."
 # 2 Run Backend container
-ansible node -m shell "docker run --name paotui_back_end --net=host -d magicpowerworld/paotui_back_end:20210706"
+ansible node -m shell -a "docker run --name paotui_back_end --net=host -d magicpowerworld/paotui_back_end:20210706"
 # 3 Run Frontend container
-ansible node -m shell "docker run --name paotui_front_end -p 80:80 -d magicpowerworld/paotui_front_end:20210706"
+ansible node -m shell -a "docker run --name paotui_front_end -p 80:80 -d magicpowerworld/paotui_front_end:20210706"
 ```
