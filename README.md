@@ -131,9 +131,9 @@ ansible-playbook paotui_deploy.yml
       shell: cd gocode/DockerDeployProjectGoLiveRun4/ && go mod tidy && go run .
 
     - name: Run backend container
-      shell: docker run --name paotui_back_end --net=host -d magicpowerworld/paotui_back_end:20210706
+      shell: docker run --name paotui_back_end --net=host -d magicpowerworld/paotui_back_end:20210708
 
     - name: Run frontend container
-      shell: docker run --name paotui_front_end -p 80:80 -d magicpowerworld/paotui_front_end:20210706
+      shell: docker run --name paotui_front_end -p 443:443 -d magicpowerworld/paotui_front_end:20210708
 
 ```
