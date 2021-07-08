@@ -59,16 +59,21 @@ ansible-playbook paotui_deploy.yml
 *paotui_deploy.yml*
 ```yaml
 - hosts: node
+  vars:
+    - go_installer: go1.16.5.linux-amd64.tar.gz
+    - paotui_mysql_image: magicpowerworld/paotui_mysql:20210706
+    - paotui_back_end_image: magicpowerworld/paotui_back_end:20210708
+    - paotui_front_end_image: magicpowerworld/paotui_front_end:20210708
   tasks:
 
     - name: Install Git
       yum: name=git state=installed
 
     - name: Download Go
-      get_url: url=https://golang.org/dl/go1.16.5.linux-amd64.tar.gz dest=~
+      get_url: url="https://golang.org/dl/{{go_installer}}" dest=~
 
     - name: Extract Go download
-      unarchive: src=~/go1.16.5.linux-amd64.tar.gz dest=/usr/local remote_src=yes
+      unarchive: src="~/{{go_installer}}" dest=/usr/local remote_src=yes
 
     - name: Make dir for go code
       file: path=~/gocode state=directory
@@ -119,7 +124,7 @@ ansible-playbook paotui_deploy.yml
       shell: mv DockerDeployProjectGoLiveRun4/ gocode/DockerDeployProjectGoLiveRun4
 
     - name: Run MySQL container
-      shell: docker run --name paotui_mysql -dp 3306:3306 magicpowerworld/paotui_mysql:20210706
+      shell: "docker run --name paotui_mysql -dp 3306:3306 {{paotui_mysql_image}}"
 
     - name: Wait 20 sec
       shell: sleep 20
@@ -131,9 +136,9 @@ ansible-playbook paotui_deploy.yml
       shell: cd gocode/DockerDeployProjectGoLiveRun4/ && go mod tidy && go run .
 
     - name: Run backend container
-      shell: docker run --name paotui_back_end --net=host -d magicpowerworld/paotui_back_end:20210708
+      shell: "docker run --name paotui_back_end --net=host -d {{paotui_back_end_image}}"
 
     - name: Run frontend container
-      shell: docker run --name paotui_front_end -p 443:443 -d magicpowerworld/paotui_front_end:20210708
+      shell: "docker run --name paotui_front_end -p 443:443 -d {{paotui_front_end_image}}"
 
 ```
