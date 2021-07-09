@@ -79,22 +79,14 @@ ansible-playbook paotui_deploy.yml
       file: path=~/gocode state=directory
 
     - name: Env variable
-      lineinfile: line='export GOROOT=/usr/local/go' dest=/etc/profile
-
-    - name: Env variable
-      lineinfile: line='export GOROOT=/usr/local/go' dest=/root/.bashrc
-
-    - name: Env variable
-      lineinfile: line='export GOPATH=~/gocode' dest=/etc/profile
-
-    - name: Env variable
-      lineinfile: line='export GOPATH=~/gocode' dest=/root/.bashrc
-
-    - name: Env variable
-      lineinfile: line='export PATH=$GOPATH/bin:$GOROOT/bin:$PATH' dest=/etc/profile
-
-    - name: Env variable
-      lineinfile: line='export PATH=$GOPATH/bin:$GOROOT/bin:$PATH' dest=/root/.bashrc
+      lineinfile: line='{{item.content}}' dest={{item.dest}}
+      with_items:
+        - {content: 'export GOROOT=/usr/local/go', dest: '/etc/profile'}
+        - {content: 'export GOROOT=/usr/local/go', dest: '/root/.bashrc'}
+        - {content: 'export GOPATH=~/gocode', dest: '/etc/profile'}
+        - {content: 'export GOPATH=~/gocode', dest: '/root/.bashrc'}
+        - {content: 'export PATH=$GOPATH/bin:$GOROOT/bin:$PATH', dest: '/etc/profile'}
+        - {content: 'export PATH=$GOPATH/bin:$GOROOT/bin:$PATH', dest: '/root/.bashrc'}
 
     - name: Pre install docker
       yum: name=yum-utils state=installed
@@ -102,20 +94,16 @@ ansible-playbook paotui_deploy.yml
     - name: Configure yum manager
       shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
-    - name: Install docker ce
-      yum: name=docker-ce state=installed
-
-    - name: Install docker ce cli
-      yum: name=docker-ce-cli state=installed
-
-    - name: Install containerd io
-      yum: name=containerd.io state=installed
+    - name: Install docker
+      yum: name="{{packages}}" state=present
+      vars:
+        packages:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
 
     - name: Enable docker
-      systemd: name=docker enabled=yes
-
-    - name: Start docker
-      systemd: name=docker state=started
+      systemd: name=docker enabled=yes state=started
 
     - name: Clone database populate app
       shell: git clone https://github.com/qinchenfeng/DockerDeployProjectGoLiveRun4.git
