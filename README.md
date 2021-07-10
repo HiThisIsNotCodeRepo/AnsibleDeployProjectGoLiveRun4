@@ -63,7 +63,7 @@ ansible-playbook paotui_deploy.yml
     - go_installer: go1.16.5.linux-amd64.tar.gz
     - paotui_mysql_image: magicpowerworld/paotui_mysql:20210706
     - paotui_back_end_image: magicpowerworld/paotui_back_end:20210708
-    - paotui_front_end_image: magicpowerworld/paotui_front_end:20210708
+    - paotui_front_end_image: magicpowerworld/paotui_front_end:20210710
   tasks:
 
     - name: Install Git
